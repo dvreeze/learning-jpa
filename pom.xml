@@ -12,6 +12,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <maven.compiler.release>21</maven.compiler.release>
+
+    <hibernate.version>7.0.0.Final</hibernate.version>
   </properties>
 
   <modules>
@@ -33,7 +35,7 @@
       <dependency>
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-core</artifactId>
-        <version>7.0.0.Final</version>
+        <version>${hibernate.version}</version>
       </dependency>
 
       <dependency>
@@ -55,6 +57,11 @@
 
     <pluginManagement>
       <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.13.0</version>
+        </plugin>
         <!-- Plugin to run unit tests -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>

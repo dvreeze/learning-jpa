@@ -41,14 +41,14 @@ public class Quote {
     private String quoteText;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "AUTHOR_ID", nullable = false, foreignKey = @ForeignKey())
+    @JoinColumn(name = "author_id", nullable = false, foreignKey = @ForeignKey())
     private Author attributedTo;
 
     @ManyToMany
     @JoinTable(
             name = "QUOTE_SUBJECT",
-            joinColumns = @JoinColumn(name = "QUOTE_ID", referencedColumnName = "ID"),
-            inverseJoinColumns = @JoinColumn(name = "SUBJECT_ID", referencedColumnName = "ID")
+            joinColumns = @JoinColumn(name = "quote_id", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "subject_id", referencedColumnName = "id")
     )
     private Set<Subject> subjects;
 
