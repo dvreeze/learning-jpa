@@ -20,9 +20,10 @@
  * For that, immutable Java records are much better candidates.
  * <p>
  * The entities in this quotes persistence unit have a reason to exist on their own. Hence, there is hardly
- * any "cascading behaviour" configured in the entities. The JPQL selection queries do need "fetch joins"
- * in order to get complete object graphs for the returned Quote entities, including the author and subjects
- * as parts of those object graphs.
+ * any "cascading behaviour" configured in the entities.
+ * <p>
+ * The entities have no overridden equals/hashCode methods. After all, they are highly mutable, so equality
+ * would not be stable.
  *
  * @author Chris de Vreeze
  */
