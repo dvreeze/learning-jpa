@@ -16,8 +16,8 @@
 
 /**
  * Deeply immutable data model, using immutable Java records and immutable Guava collections.
- * Unlike JPA entities, these model objects are immutable, have no lazy versus eager loading issues,
- * and have trivial and stable (generated) equals and hashCode methods.
+ * Unlike JPA entities, these model objects are not only immutable, but they also have no lazy versus
+ * eager loading issues, and they have trivial and stable (generated) equals and hashCode methods.
  *
  * @author Chris de Vreeze
  */
