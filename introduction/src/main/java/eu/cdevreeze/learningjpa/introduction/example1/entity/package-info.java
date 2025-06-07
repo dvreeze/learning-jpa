@@ -23,7 +23,7 @@
  * any "cascading behaviour" configured in the entities.
  * <p>
  * The entities have no overridden equals/hashCode methods. After all, they are highly mutable, so equality
- * would not be stable.
+ * would not be stable value equality.
  *
  * @author Chris de Vreeze
  */

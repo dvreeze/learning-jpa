@@ -46,6 +46,12 @@ public class QuotesInserter {
     public List<Quote> insertQuotes() {
         Author wimHof = insertAuthor("Wim Hof");
         Author ronPaul = insertAuthor("Ron Paul");
+        Author isaacNewton = insertAuthor("Isaac Newton");
+        Author smedleyButler = insertAuthor("Smedley Butler");
+        Author henryKissinger = insertAuthor("Henry Kissinger");
+        Author michaelLedeen = insertAuthor("Michael Ledeen");
+        Author benRich = insertAuthor("Ben Rich");
+        Author nikolaTesla = insertAuthor("Nikola Tesla");
 
         Subject innerStrength = insertSubject("inner strength");
         Subject liberty = insertSubject("liberty");
@@ -53,6 +59,17 @@ public class QuotesInserter {
         Subject financialSystem = insertSubject("financial system");
         Subject defense = insertSubject("defense");
         Subject peace = insertSubject("peace");
+        Subject patriotism = insertSubject("patriotism");
+        Subject war = insertSubject("war");
+        Subject profit = insertSubject("profit");
+        Subject genius = insertSubject("genius");
+        Subject faith = insertSubject("faith");
+        Subject achievements = insertSubject("achievements");
+        Subject conquest = insertSubject("conquest");
+        Subject racket = insertSubject("racket");
+        Subject corruptGovernment = insertSubject("corrupt government");
+        Subject hubris = insertSubject("hubris");
+        Subject hiddenKnowledge = insertSubject("hidden knowledge");
 
         List<Quote> quotes = new ArrayList<>();
         quotes.add(insertQuote(
@@ -156,6 +173,118 @@ public class QuotesInserter {
                         and minding our own business overseas.""",
                 ronPaul,
                 Set.of(liberty, peace)
+        ));
+        quotes.add(insertQuote(
+                """
+                        Real patriotism is a willingness to challenge the government when it's wrong.""",
+                ronPaul,
+                Set.of(patriotism, liberty)
+        ));
+        quotes.add(insertQuote(
+                """
+                        Believe me, the intellectual revolution is going on,
+                        and that has to come first before you see the political changes.
+                        That's where I'm very optimistic.""",
+                ronPaul,
+                Set.of(politics)
+        ));
+        quotes.add(insertQuote(
+                """
+                        War is never economically beneficial except for those in position to profit from war expenditures.""",
+                ronPaul,
+                Set.of(war, profit)
+        ));
+        quotes.add(insertQuote(
+                """
+                        There is only one kind of freedom and that's individual liberty.
+                        Our lives come from our creator and our liberty comes from our creator.
+                        It has nothing to do with government granting it.""",
+                ronPaul,
+                Set.of(liberty)
+        ));
+        quotes.add(insertQuote(
+                "Genius is patience",
+                isaacNewton,
+                Set.of(genius)
+        ));
+        quotes.add(insertQuote(
+                """
+                        Atheism is so senseless.
+                        When I look at the solar system,
+                        I see the earth at the right distance from the sun to receive the proper amounts of heat and light.
+                        This did not happen by chance.""",
+                isaacNewton,
+                Set.of(faith)
+        ));
+        quotes.add(insertQuote(
+                """
+                        If I have seen further than others, it is by standing upon the shoulders of giants.""",
+                isaacNewton,
+                Set.of(achievements)
+        ));
+        quotes.add(insertQuote(
+                """
+                        WAR is a racket.
+                        It always has been.
+                        It is possibly the oldest, easily the most profitable, surely the most vicious.
+                        It is the only one international in scope.
+                        It is the only one in which the profits are reckoned in dollars and the losses in lives.""",
+                smedleyButler,
+                Set.of(war)
+        ));
+        quotes.add(insertQuote(
+                """
+                        I spent thirty-three years and four months in active military service as a member of this country's most agile military force,
+                        the Marine Corps.
+                        I served in all commissioned ranks from Second Lieutenant to Major-General.
+                        And during that period, I spent most of my time being a high class muscle-man for Big Business, for Wall Street and for the Bankers.
+                        In short, I was a racketeer, a gangster for capitalism.""",
+                smedleyButler,
+                Set.of(war, conquest, racket)
+        ));
+        quotes.add(insertQuote(
+                """
+                        Only those who would be called upon to risk their lives for their country should have the privilege of voting
+                        to determine whether the nation should go to war.""",
+                smedleyButler,
+                Set.of(war)
+        ));
+        quotes.add(insertQuote(
+                """
+                        The illegal we do immediately; the unconstitutional takes a little longer.""",
+                henryKissinger,
+                Set.of(corruptGovernment)
+        ));
+        quotes.add(insertQuote(
+                """
+                        Military men are dumb, stupid animals to be used as pawns for foreign policy.""",
+                henryKissinger,
+                Set.of(corruptGovernment, hubris)
+        ));
+        quotes.add(insertQuote(
+                """
+                        Every now and again the United States has to pick up a crappy little country and throw it against a wall
+                        just to prove we are serious.""",
+                michaelLedeen,
+                Set.of(war, hubris)
+        ));
+        quotes.add(insertQuote(
+                "We now have the technology to bring ET home.",
+                benRich,
+                Set.of(hiddenKnowledge)
+        ));
+        quotes.add(insertQuote(
+                """
+                        If you want to find the secrets of the universe, think in terms of energy, frequency and vibration.""",
+                nikolaTesla,
+                Set.of(hiddenKnowledge)
+        ));
+        quotes.add(insertQuote(
+                """
+                        The day science begins to study non-physical phenomena,
+                        it will make more progress in one decade than in all the previous centuries of its existence.""",
+                nikolaTesla,
+                Set.of(hiddenKnowledge)
         ));
         return List.copyOf(quotes);
     }
