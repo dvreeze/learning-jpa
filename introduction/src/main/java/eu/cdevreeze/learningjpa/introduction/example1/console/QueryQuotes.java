@@ -45,8 +45,9 @@ public class QueryQuotes {
 
     public static void main(String[] args) {
         try (EntityManagerFactory emf = createEntityManagerFactory()) {
-            emf.getSchemaManager().create(true);
-            emf.getSchemaManager().validate();
+            // Below, each call to method "callInTransaction" creates a new application-managed
+            // EntityManager. Also, a new resource-local transaction is started, and the new EntityManager
+            // is associated with that new transaction. If we had used JTA transactions, that would not have been the case.
 
             ImmutableList<Model.Quote> insertedQuotes =
                     emf.callInTransaction(em ->
@@ -78,10 +79,6 @@ public class QueryQuotes {
 
             System.out.println();
             System.out.printf("Number of quotes: %d%n", queriedQuotes.size());
-
-            // Not dropping the schema
-        } catch (SchemaValidationException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -89,10 +86,11 @@ public class QueryQuotes {
         return new PersistenceConfiguration("Quotes")
                 .transactionType(PersistenceUnitTransactionType.RESOURCE_LOCAL)
                 .property(PersistenceConfiguration.JDBC_DRIVER, "org.h2.Driver")
-                .property(PersistenceConfiguration.JDBC_URL, "jdbc:h2:mem:quotedb")
+                .property(PersistenceConfiguration.JDBC_URL, "jdbc:h2:mem:quotedb") // in-memory
                 .property(PersistenceConfiguration.JDBC_USER, "sa")
                 .property(PersistenceConfiguration.JDBC_PASSWORD, "")
                 .property(PersistenceConfiguration.CACHE_MODE, SharedCacheMode.ENABLE_SELECTIVE) // 2nd level cache by default disabled
+                .property(PersistenceConfiguration.SCHEMAGEN_DATABASE_ACTION, "drop-and-create") // see Jakarta Persistence spec
                 .property("hibernate.show_sql", true) // Hibernate-specific
                 .property("hibernate.format_sql", true) // Hibernate-specific
                 .property("hibernate.highlight_sql", true) // Hibernate-specific
