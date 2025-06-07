@@ -19,7 +19,7 @@
  * relational database data. JPA entities should not be used as (immutable) model data or data transfer objects.
  * For that, immutable Java records are much better candidates.
  * <p>
- * The entities in the persistence unit have a reason to exist on their own. Hence, there is hardly
+ * The entities in this quotes persistence unit have a reason to exist on their own. Hence, there is hardly
  * any "cascading behaviour" configured in the entities. The JPQL selection queries do need "fetch joins"
  * in order to get complete object graphs for the returned Quote entities, including the author and subjects
  * as parts of those object graphs.

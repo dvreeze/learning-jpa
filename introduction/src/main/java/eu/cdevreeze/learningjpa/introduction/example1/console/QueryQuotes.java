@@ -29,6 +29,10 @@ import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Root;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -48,21 +52,32 @@ public class QueryQuotes {
                     emf.callInTransaction(em ->
                             insertQuotes(em).stream().map(Quote::toModel).collect(ImmutableList.toImmutableList()));
 
+            // JPQL query for quotes, using a JPQL query string
             ImmutableList<Model.Quote> queriedQuotes =
                     emf.callInTransaction(QueryQuotes::findAllQuotes);
 
             Preconditions.checkArgument(queriedQuotes.equals(insertedQuotes));
 
-            // The same query, as criteria API query, depending on the generated meta model
+            // The same query, as criteria API query, depending on the generated metamodel
             ImmutableList<Model.Quote> queriedQuotesUsingCriteriaApi =
                     emf.callInTransaction(QueryQuotes::findAllQuotesUsingCriteriaApi);
 
             Preconditions.checkArgument(queriedQuotesUsingCriteriaApi.equals(insertedQuotes));
 
+            // The same query, as a combination of a native query for IDs, and EntityManager.find calls
+            // Of course this is very inefficient, and should not be done in practice
+            ImmutableList<Model.Quote> queriedQuotesWithoutUsingJpql =
+                    emf.callInTransaction(QueryQuotes::findQuotesOneByOne);
+
+            Preconditions.checkArgument(queriedQuotesWithoutUsingJpql.equals(insertedQuotes));
+
             queriedQuotes.forEach(qt -> {
                 System.out.println();
                 System.out.println(qt);
             });
+
+            System.out.println();
+            System.out.printf("Number of quotes: %d%n", queriedQuotes.size());
 
             // Not dropping the schema
         } catch (SchemaValidationException e) {
@@ -115,6 +130,30 @@ public class QueryQuotes {
 
         return entityManager.createQuery(cq)
                 .getResultStream()
+                .map(Quote::toModel)
+                .collect(ImmutableList.toImmutableList());
+    }
+
+    private static ImmutableList<Model.Quote> findQuotesOneByOne(EntityManager entityManager) {
+        // Native SQL query for quote IDs
+        ConnectionFunction<Connection, List<Long>> quoteIdQuery = con -> {
+            String sql = String.format("select %s from %s", Quote_.ID, "QUOTE");
+
+            List<Long> ids = new ArrayList<>();
+            try (PreparedStatement ps = con.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    ids.add(rs.getLong(1));
+                }
+            }
+            return List.copyOf(ids);
+        };
+        List<Long> quoteIds = entityManager.callWithConnection(quoteIdQuery);
+
+        // Finding the quotes, one by one, using method EntityManager.find
+        // Clearly, this is quite inefficient, and should not be done in practice
+        return quoteIds.stream()
+                .map(id -> entityManager.find(Quote.class, id))
                 .map(Quote::toModel)
                 .collect(ImmutableList.toImmutableList());
     }

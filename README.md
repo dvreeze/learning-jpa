@@ -14,6 +14,7 @@ Much of the theory is about making sense of the specification:
 * From a "functional programming" perspective, what is the *implicit program state* when using Jakarta Persistence?
 * How does this implicit program state conceptually relate to JDBC program state?
 * What is the *essence* of Jakarta Persistence, and how can we *think in Jakarta Persistence*? Knowing the essence makes it easier to guess or look up details
+* Related to this, what is *the underlying data model*, compared with the relational data model?
 * How can we *introspect* Jakarta Persistence "program state", and how can we go down to the JDBC level if needed?
 
 The practice parts are the Maven modules in this Maven project. There are several such Maven modules, exploring variations in:
