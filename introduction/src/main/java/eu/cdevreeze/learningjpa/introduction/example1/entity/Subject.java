@@ -27,7 +27,7 @@ import java.util.Optional;
  * @author Chris de Vreeze
  */
 @Entity
-@Table(name = "SUBJECT")
+@Table(name = "Subject") // This annotation could be left out (i.e. left implicit)
 public class Subject {
 
     @Id

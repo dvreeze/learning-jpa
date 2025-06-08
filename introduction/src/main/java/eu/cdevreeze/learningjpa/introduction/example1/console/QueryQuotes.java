@@ -92,7 +92,7 @@ public class QueryQuotes {
         // The "join fetch" does what it says, namely retrieving the quote's author and subjects as well.
         String ql = """
                 select qt from Quote qt
-                left join fetch qt.attributedTo auth
+                join fetch qt.attributedTo auth
                 left join fetch qt.subjects subj""";
         return entityManager.createQuery(ql, Quote.class)
                 .getResultStream()
@@ -108,7 +108,7 @@ public class QueryQuotes {
         // Clearly that would be quite undesirable.
         // The "join fetch" does what it says, namely retrieving the quote's author and subjects as well.
         Root<Quote> quote = cq.from(Quote.class);
-        quote.fetch(Quote_.attributedTo, JoinType.LEFT);
+        quote.fetch(Quote_.attributedTo, JoinType.INNER);
         quote.fetch(Quote_.subjects, JoinType.LEFT);
         cq.select(quote);
 

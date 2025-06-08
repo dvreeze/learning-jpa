@@ -30,7 +30,7 @@ import java.util.Optional;
  * @author Chris de Vreeze
  */
 @Entity
-@Table(name = "QUOTE")
+@Table(name = "Quote") // This annotation could be left out (i.e. left implicit)
 public class Quote {
 
     @Id
@@ -43,15 +43,15 @@ public class Quote {
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     // implies nullable is false for the JoinColumn if the schema is generated
-    @JoinColumn(name = "author_id", foreignKey = @ForeignKey())
+    @JoinColumn(name = "authorId", foreignKey = @ForeignKey(name = "FkAttributedTo"))
     private Author attributedTo;
 
     // Alternatively, we could turn the quote-subject mapping into a separate entity
     @ManyToMany
     @JoinTable(
-            name = "QUOTE_SUBJECT",
-            joinColumns = @JoinColumn(name = "quote_id", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "subject_id", referencedColumnName = "id")
+            name = "QuoteSubject",
+            joinColumns = @JoinColumn(name = "quoteId", referencedColumnName = "id", foreignKey = @ForeignKey(name = "FkQuoteId")),
+            inverseJoinColumns = @JoinColumn(name = "subjectId", referencedColumnName = "id", foreignKey = @ForeignKey(name = "FkSubjectId"))
     )
     // List instead of Set, to avoid having to override equals/hashCode for highly mutable JPA entities
     private List<Subject> subjects;
