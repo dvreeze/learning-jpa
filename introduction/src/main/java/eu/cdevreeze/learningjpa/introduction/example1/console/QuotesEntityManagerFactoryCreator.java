@@ -46,6 +46,7 @@ public class QuotesEntityManagerFactoryCreator {
                 .property("hibernate.show_sql", true) // Hibernate-specific
                 .property("hibernate.format_sql", true) // Hibernate-specific
                 .property("hibernate.highlight_sql", true) // Hibernate-specific
+                .property("hibernate.jpa.compliance.query", true) // Hibernate-specific
                 .managedClass(Quote.class)
                 .managedClass(Subject.class)
                 .managedClass(Author.class)

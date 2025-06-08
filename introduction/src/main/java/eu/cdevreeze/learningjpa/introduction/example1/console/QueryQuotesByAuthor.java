@@ -89,9 +89,9 @@ public class QueryQuotesByAuthor {
         // The "join fetch" does what it says, namely retrieving the quote's author and subjects as well.
         String ql = """
                 select qt from Quote qt
-                join fetch qt.attributedTo auth
-                left join fetch qt.subjects subj
-                where auth.name = :authorName""";
+                join fetch qt.attributedTo
+                left join fetch qt.subjects
+                where qt.attributedTo.name = :authorName""";
         return entityManager.createQuery(ql, Quote.class)
                 .setParameter("authorName", authorName)
                 .getResultStream()
