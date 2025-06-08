@@ -20,9 +20,9 @@ import com.google.common.collect.ImmutableSet;
 import eu.cdevreeze.learningjpa.introduction.example1.model.Model;
 import jakarta.persistence.*;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Quote JPA entity.
@@ -37,29 +37,32 @@ public class Quote {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Basic(optional = false) // this implies the column is not nullable
+    @Basic(optional = false) // this implies the column is not nullable when generating the schema
     @Column(length = 5000)
     private String quoteText;
 
-    @ManyToOne(optional = false) // implies nullable is false for the JoinColumn
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    // implies nullable is false for the JoinColumn if the schema is generated
     @JoinColumn(name = "author_id", foreignKey = @ForeignKey())
     private Author attributedTo;
 
+    // Alternatively, we could turn the quote-subject mapping into a separate entity
     @ManyToMany
     @JoinTable(
             name = "QUOTE_SUBJECT",
             joinColumns = @JoinColumn(name = "quote_id", referencedColumnName = "id"),
             inverseJoinColumns = @JoinColumn(name = "subject_id", referencedColumnName = "id")
     )
-    private Set<Subject> subjects;
+    // List instead of Set, to avoid having to override equals/hashCode for highly mutable JPA entities
+    private List<Subject> subjects;
 
     protected Quote() {
     }
 
-    public Quote(String quoteText, Author attributedTo, Set<Subject> subjects) {
+    public Quote(String quoteText, Author attributedTo, List<Subject> subjects) {
         this.quoteText = quoteText;
         this.attributedTo = attributedTo;
-        this.subjects = new HashSet<>(subjects);
+        this.subjects = new ArrayList<>(subjects);
     }
 
     public Long getId() {
@@ -86,11 +89,11 @@ public class Quote {
         this.attributedTo = attributedTo;
     }
 
-    public Set<Subject> getSubjects() {
+    public List<Subject> getSubjects() {
         return subjects;
     }
 
-    public void setSubjects(Set<Subject> subjects) {
+    public void setSubjects(List<Subject> subjects) {
         this.subjects = subjects;
     }
 

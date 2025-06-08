@@ -306,7 +306,7 @@ public class QuotesInserter {
     }
 
     private Quote insertQuote(String quoteText, Author attributedTo, Set<Subject> subjects) {
-        Quote quote = new Quote(quoteText, attributedTo, subjects);
+        Quote quote = new Quote(quoteText, attributedTo, new ArrayList<>(subjects));
         Preconditions.checkArgument(!entityManager.contains(quote));
         entityManager.persist(quote);
         Preconditions.checkArgument(entityManager.contains(quote));
