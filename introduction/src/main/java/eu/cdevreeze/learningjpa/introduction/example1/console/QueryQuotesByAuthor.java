@@ -18,9 +18,13 @@ package eu.cdevreeze.learningjpa.introduction.example1.console;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import eu.cdevreeze.learningjpa.introduction.example1.entity.*;
+import eu.cdevreeze.learningjpa.introduction.example1.entity.Author;
+import eu.cdevreeze.learningjpa.introduction.example1.entity.Author_;
+import eu.cdevreeze.learningjpa.introduction.example1.entity.Quote;
+import eu.cdevreeze.learningjpa.introduction.example1.entity.Quote_;
 import eu.cdevreeze.learningjpa.introduction.example1.model.Model;
-import jakarta.persistence.*;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.criteria.*;
 
 import java.util.List;
@@ -74,21 +78,7 @@ public class QueryQuotesByAuthor {
     }
 
     private static EntityManagerFactory createEntityManagerFactory() {
-        return new PersistenceConfiguration("Quotes")
-                .transactionType(PersistenceUnitTransactionType.RESOURCE_LOCAL)
-                .property(PersistenceConfiguration.JDBC_DRIVER, "org.h2.Driver")
-                .property(PersistenceConfiguration.JDBC_URL, "jdbc:h2:mem:quotedb") // in-memory
-                .property(PersistenceConfiguration.JDBC_USER, "sa")
-                .property(PersistenceConfiguration.JDBC_PASSWORD, "")
-                .property(PersistenceConfiguration.CACHE_MODE, SharedCacheMode.ENABLE_SELECTIVE) // 2nd level cache by default disabled
-                .property(PersistenceConfiguration.SCHEMAGEN_DATABASE_ACTION, "drop-and-create") // see Jakarta Persistence spec
-                .property("hibernate.show_sql", true) // Hibernate-specific
-                .property("hibernate.format_sql", true) // Hibernate-specific
-                .property("hibernate.highlight_sql", true) // Hibernate-specific
-                .managedClass(Quote.class)
-                .managedClass(Subject.class)
-                .managedClass(Author.class)
-                .createEntityManagerFactory();
+        return QuotesEntityManagerFactoryCreator.createEntityManagerFactory();
     }
 
     private static ImmutableList<Model.Quote> findQuotesByAuthor(EntityManager entityManager, String authorName) {
