@@ -37,11 +37,12 @@ public class Quote {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(nullable = false, length = 5000)
+    @Basic(optional = false) // this implies the column is not nullable
+    @Column(length = 5000)
     private String quoteText;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "author_id", nullable = false, foreignKey = @ForeignKey())
+    @ManyToOne(optional = false) // implies nullable is false for the JoinColumn
+    @JoinColumn(name = "author_id", foreignKey = @ForeignKey())
     private Author attributedTo;
 
     @ManyToMany

@@ -27,11 +27,13 @@
  * <p>
  * Each JPA entity has an explicit or implicit {@link jakarta.persistence.Table} annotation (for the "primary table").
  * Other JPA annotations on the entity are either at the "SQL level" or at the higher object-oriented abstraction level.
- * That shows that each entity instance is roughly a mutable representation as Java object of a database table row,
- * enhanced with "semantic information" about relationships to other tables, etc. This also shows what
- * JPQL is about. JPQL is essentially "SQL, enhanced with language constructs using that semantic
- * information". Put differently, JPQL is an object-oriented SQL dialect. The translation of JPQL to SQL
- * is about mapping the OO JPQL-specific language constructs to plain SQL.
+ * See <a href="https://docs.jboss.org/hibernate/orm/7.0/introduction/html_single/Hibernate_Introduction.html#basic-attributes">basic attributes</a>,
+ * where a distinction is made between annotations concerning the "mapping layer" and annotations concerning the "logical layer".
+ * The remarks above show that each entity instance is roughly a mutable representation as Java object of a <em>database table row</em>,
+ * enhanced with "logical information" about relationships to other tables, etc. This also shows what
+ * JPQL is about. JPQL is essentially "SQL, enhanced with language constructs concerning the logical layer".
+ * Put differently, JPQL is an object-oriented SQL dialect. The translation of JPQL to SQL is about mapping the
+ * OO "logical layer" language constructs to plain SQL.
  *
  * @author Chris de Vreeze
  */

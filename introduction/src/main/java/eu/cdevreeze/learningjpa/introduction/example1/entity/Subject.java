@@ -34,7 +34,7 @@ public class Subject {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(nullable = false)
+    @Basic(optional = false) // better than: @Column(nullable = false)
     private String subject;
 
     protected Subject() {
