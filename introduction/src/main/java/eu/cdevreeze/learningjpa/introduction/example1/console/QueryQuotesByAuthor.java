@@ -110,9 +110,10 @@ public class QueryQuotesByAuthor {
         quote.fetch(Quote_.attributedTo, JoinType.LEFT);
         quote.fetch(Quote_.subjects, JoinType.LEFT);
         cq.select(quote)
-                .where(cb.equal(quote.get(Quote_.attributedTo).get(Author_.name), cb.literal(authorName)));
+                .where(cb.equal(quote.get(Quote_.attributedTo).get(Author_.name), cb.parameter(String.class, "authName")));
 
         return entityManager.createQuery(cq)
+                .setParameter("authName", authorName)
                 .getResultStream()
                 .map(Quote::toModel)
                 .collect(ImmutableList.toImmutableList());
