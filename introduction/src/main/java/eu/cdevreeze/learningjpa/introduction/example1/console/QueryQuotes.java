@@ -22,6 +22,7 @@ import eu.cdevreeze.learningjpa.introduction.example1.entity.Quote;
 import eu.cdevreeze.learningjpa.introduction.example1.entity.Quote_;
 import eu.cdevreeze.learningjpa.introduction.example1.model.Model;
 import jakarta.persistence.ConnectionFunction;
+import jakarta.persistence.EntityGraph;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -121,7 +122,7 @@ public class QueryQuotes {
     private static ImmutableList<Model.Quote> findQuotesOneByOne(EntityManager entityManager) {
         // Native SQL query for quote IDs
         ConnectionFunction<Connection, List<Long>> quoteIdQuery = con -> {
-            String sql = String.format("select %s from %s", Quote_.ID, "QUOTE");
+            String sql = String.format("select %s from %s", Quote_.ID, "Quote");
 
             List<Long> ids = new ArrayList<>();
             try (PreparedStatement ps = con.prepareStatement(sql);
@@ -137,7 +138,13 @@ public class QueryQuotes {
         // Finding the quotes, one by one, using method EntityManager.find
         // Clearly, this is quite inefficient, and should not be done in practice
         return quoteIds.stream()
-                .map(id -> entityManager.find(Quote.class, id))
+                .map(id -> {
+                    // Trying to avoid triggering lazy fetching, by fetching needed data upfront
+                    EntityGraph<Quote> quoteGraph = entityManager.createEntityGraph(Quote.class);
+                    quoteGraph.addSubgraph(Quote_.attributedTo);
+                    quoteGraph.addElementSubgraph(Quote_.subjects);
+                    return entityManager.find(quoteGraph, id);
+                })
                 .map(Quote::toModel)
                 .collect(ImmutableList.toImmutableList());
     }

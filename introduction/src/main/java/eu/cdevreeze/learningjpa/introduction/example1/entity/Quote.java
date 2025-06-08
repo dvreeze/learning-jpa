@@ -97,6 +97,10 @@ public class Quote {
         this.subjects = subjects;
     }
 
+    /**
+     * Converts this Quote entity to an immutable Quote record in the immutable data model.
+     * It is assumed that all associated data is available in this entity.
+     */
     public Model.Quote toModel() {
         return new Model.Quote(
                 Optional.ofNullable(getId()).stream().mapToLong(id -> id).findFirst(),
