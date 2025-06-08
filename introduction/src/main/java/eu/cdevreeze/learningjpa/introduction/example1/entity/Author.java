@@ -37,7 +37,7 @@ public class Author {
     @Column(nullable = false)
     private String name;
 
-    public Author() {
+    protected Author() {
     }
 
     public Author(String name) {

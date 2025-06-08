@@ -52,7 +52,7 @@ public class Quote {
     )
     private Set<Subject> subjects;
 
-    public Quote() {
+    protected Quote() {
     }
 
     public Quote(String quoteText, Author attributedTo, Set<Subject> subjects) {

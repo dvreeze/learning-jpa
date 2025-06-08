@@ -18,14 +18,16 @@ package eu.cdevreeze.learningjpa.introduction.example1.console;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import eu.cdevreeze.learningjpa.introduction.example1.entity.Author;
 import eu.cdevreeze.learningjpa.introduction.example1.entity.Author_;
 import eu.cdevreeze.learningjpa.introduction.example1.entity.Quote;
 import eu.cdevreeze.learningjpa.introduction.example1.entity.Quote_;
 import eu.cdevreeze.learningjpa.introduction.example1.model.Model;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.criteria.*;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.JoinType;
+import jakarta.persistence.criteria.Root;
 
 import java.util.List;
 import java.util.Objects;
@@ -105,7 +107,7 @@ public class QueryQuotesByAuthor {
         // Clearly that would be quite undesirable.
         // The "join fetch" does what it says, namely retrieving the quote's author and subjects as well.
         Root<Quote> quote = cq.from(Quote.class);
-        Fetch<Quote, Author> attributedTo = quote.fetch(Quote_.attributedTo, JoinType.LEFT);
+        quote.fetch(Quote_.attributedTo, JoinType.LEFT);
         quote.fetch(Quote_.subjects, JoinType.LEFT);
         cq.select(quote)
                 .where(cb.equal(quote.get(Quote_.attributedTo).get(Author_.name), cb.literal(authorName)));

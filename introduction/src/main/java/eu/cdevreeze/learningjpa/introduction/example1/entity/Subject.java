@@ -37,7 +37,7 @@ public class Subject {
     @Column(nullable = false)
     private String subject;
 
-    public Subject() {
+    protected Subject() {
     }
 
     public Subject(String subject) {
