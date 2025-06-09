@@ -22,6 +22,7 @@ import eu.cdevreeze.learningjpa.introduction.example1.entity.Author_;
 import eu.cdevreeze.learningjpa.introduction.example1.entity.Quote;
 import eu.cdevreeze.learningjpa.introduction.example1.entity.Quote_;
 import eu.cdevreeze.learningjpa.introduction.example1.model.Model;
+import jakarta.persistence.EntityGraph;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -39,6 +40,8 @@ import java.util.Objects;
  * @author Chris de Vreeze
  */
 public class QueryQuotesByAuthor {
+
+    private static final String LOAD_GRAPH = "jakarta.persistence.loadgraph";
 
     public static void main(String[] args) {
         Objects.checkIndex(0, args.length);
@@ -68,6 +71,12 @@ public class QueryQuotesByAuthor {
                     emf.callInTransaction(em -> findQuotesByAuthorUsingCriteriaApi(em, authorName));
 
             Preconditions.checkArgument(queriedQuotesUsingCriteriaApi.equals(filteredQuotes));
+
+            // Simple query, using "load graph hint"
+            ImmutableList<Model.Quote> queriedQuotesUsingGraphHint =
+                    emf.callInTransaction(em -> findQuotesByAuthorUsingEntityGraph(em, authorName));
+
+            Preconditions.checkArgument(queriedQuotesUsingGraphHint.equals(filteredQuotes));
 
             queriedQuotes.forEach(qt -> {
                 System.out.println();
@@ -112,8 +121,26 @@ public class QueryQuotesByAuthor {
         cq.select(quote)
                 .where(cb.equal(quote.get(Quote_.attributedTo).get(Author_.name), cb.parameter(String.class, "authName")));
 
+        // Below, we could have done without the parameter, by using "cb.literal" instead of "cb.parameter" above.
         return entityManager.createQuery(cq)
                 .setParameter("authName", authorName)
+                .getResultStream()
+                .map(Quote::toModel)
+                .collect(ImmutableList.toImmutableList());
+    }
+
+    private static ImmutableList<Model.Quote> findQuotesByAuthorUsingEntityGraph(EntityManager entityManager, String authorName) {
+        // See https://www.baeldung.com/jpa-entity-graph
+
+        String ql = "select qt from Quote qt where qt.attributedTo.name = :authorName";
+
+        EntityGraph<Quote> quoteGraph = entityManager.createEntityGraph(Quote.class);
+        quoteGraph.addSubgraph(Quote_.attributedTo);
+        quoteGraph.addElementSubgraph(Quote_.subjects);
+
+        return entityManager.createQuery(ql, Quote.class)
+                .setParameter("authorName", authorName)
+                .setHint(LOAD_GRAPH, quoteGraph)
                 .getResultStream()
                 .map(Quote::toModel)
                 .collect(ImmutableList.toImmutableList());

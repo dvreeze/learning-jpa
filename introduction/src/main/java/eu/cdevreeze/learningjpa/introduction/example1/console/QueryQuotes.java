@@ -44,6 +44,8 @@ import java.util.List;
  */
 public class QueryQuotes {
 
+    private static final String LOAD_GRAPH = "jakarta.persistence.loadgraph";
+
     public static void main(String[] args) {
         try (EntityManagerFactory emf = createEntityManagerFactory()) {
             // Below, each call to method "callInTransaction" creates a new application-managed
@@ -72,6 +74,12 @@ public class QueryQuotes {
                     emf.callInTransaction(QueryQuotes::findQuotesOneByOne);
 
             Preconditions.checkArgument(queriedQuotesWithoutUsingJpql.equals(insertedQuotes));
+
+            // Simple JPQL query, using "load graph hint"
+            ImmutableList<Model.Quote> queriedQuotesUsingGraphHint =
+                    emf.callInTransaction(QueryQuotes::findAllQuotesUsingEntityGraph);
+
+            Preconditions.checkArgument(queriedQuotesUsingGraphHint.equals(insertedQuotes));
 
             queriedQuotes.forEach(qt -> {
                 System.out.println();
@@ -145,6 +153,22 @@ public class QueryQuotes {
                     quoteGraph.addElementSubgraph(Quote_.subjects);
                     return entityManager.find(quoteGraph, id);
                 })
+                .map(Quote::toModel)
+                .collect(ImmutableList.toImmutableList());
+    }
+
+    private static ImmutableList<Model.Quote> findAllQuotesUsingEntityGraph(EntityManager entityManager) {
+        // See https://www.baeldung.com/jpa-entity-graph
+
+        String ql = "select qt from Quote qt";
+
+        EntityGraph<Quote> quoteGraph = entityManager.createEntityGraph(Quote.class);
+        quoteGraph.addSubgraph(Quote_.attributedTo);
+        quoteGraph.addElementSubgraph(Quote_.subjects);
+
+        return entityManager.createQuery(ql, Quote.class)
+                .setHint(LOAD_GRAPH, quoteGraph)
+                .getResultStream()
                 .map(Quote::toModel)
                 .collect(ImmutableList.toImmutableList());
     }

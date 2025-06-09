@@ -99,7 +99,8 @@ public class Quote {
 
     /**
      * Converts this Quote entity to an immutable Quote record in the immutable data model.
-     * It is assumed that all associated data is available in this entity.
+     * It is assumed that all associated data is available in this entity. Otherwise, when
+     * inside an open EntityManager, lazy fetches would take place, thus increasing the number of SQL queries.
      */
     public Model.Quote toModel() {
         return new Model.Quote(
