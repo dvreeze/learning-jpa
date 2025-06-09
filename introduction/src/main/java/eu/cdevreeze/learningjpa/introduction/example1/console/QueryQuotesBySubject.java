@@ -20,33 +20,31 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import eu.cdevreeze.learningjpa.introduction.example1.entity.Quote;
 import eu.cdevreeze.learningjpa.introduction.example1.entity.Quote_;
+import eu.cdevreeze.learningjpa.introduction.example1.entity.Subject;
+import eu.cdevreeze.learningjpa.introduction.example1.entity.Subject_;
 import eu.cdevreeze.learningjpa.introduction.example1.model.Model;
-import jakarta.persistence.ConnectionFunction;
 import jakarta.persistence.EntityGraph;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.criteria.CriteriaBuilder;
-import jakarta.persistence.criteria.CriteriaQuery;
-import jakarta.persistence.criteria.JoinType;
-import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.*;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
- * Example program querying for quotes. It uses an H2 in-memory database, and does all the
+ * Example program querying for quotes for a given subject. It uses an H2 in-memory database, and does all the
  * needed bootstrapping itself, without needing any context.
  *
  * @author Chris de Vreeze
  */
-public class QueryQuotes {
+public class QueryQuotesBySubject {
 
     private static final String LOAD_GRAPH = "jakarta.persistence.loadgraph";
 
     public static void main(String[] args) {
+        Objects.checkIndex(0, args.length);
+        String subject = args[0];
+
         try (EntityManagerFactory emf = createEntityManagerFactory()) {
             // Below, each call to method "callInTransaction" creates a new application-managed
             // EntityManager. Also, a new resource-local transaction is started, and the new EntityManager
@@ -55,31 +53,28 @@ public class QueryQuotes {
             ImmutableList<Model.Quote> insertedQuotes =
                     emf.callInTransaction(em ->
                             insertQuotes(em).stream().map(Quote::toModel).collect(ImmutableList.toImmutableList()));
+            ImmutableList<Model.Quote> filteredQuotes =
+                    insertedQuotes.stream()
+                            .filter(qt -> qt.subjects().stream().map(Model.Subject::subject).toList().contains(subject))
+                            .collect(ImmutableList.toImmutableList());
 
-            // JPQL query for quotes, using a JPQL query string
+            // JPQL query for quotes for the subject, using a JPQL query string
             ImmutableList<Model.Quote> queriedQuotes =
-                    emf.callInTransaction(QueryQuotes::findAllQuotes);
+                    emf.callInTransaction(em -> findQuotesBySubject(em, subject));
 
-            Preconditions.checkArgument(queriedQuotes.equals(insertedQuotes));
+            Preconditions.checkArgument(queriedQuotes.equals(filteredQuotes));
 
             // The same query, as criteria API query, depending on the generated metamodel
             ImmutableList<Model.Quote> queriedQuotesUsingCriteriaApi =
-                    emf.callInTransaction(QueryQuotes::findAllQuotesUsingCriteriaApi);
+                    emf.callInTransaction(em -> findQuotesBySubjectUsingCriteriaApi(em, subject));
 
-            Preconditions.checkArgument(queriedQuotesUsingCriteriaApi.equals(insertedQuotes));
+            Preconditions.checkArgument(queriedQuotesUsingCriteriaApi.equals(filteredQuotes));
 
-            // The same query, as a combination of a native query for IDs, and EntityManager.find calls
-            // Of course this is very inefficient, and should not be done in practice
-            ImmutableList<Model.Quote> queriedQuotesWithoutUsingJpql =
-                    emf.callInTransaction(QueryQuotes::findQuotesOneByOne);
-
-            Preconditions.checkArgument(queriedQuotesWithoutUsingJpql.equals(insertedQuotes));
-
-            // Simple JPQL query, using "load graph hint"
+            // Simple query, using "load graph hint"
             ImmutableList<Model.Quote> queriedQuotesUsingGraphHint =
-                    emf.callInTransaction(QueryQuotes::findAllQuotesUsingEntityGraph);
+                    emf.callInTransaction(em -> findQuotesBySubjectUsingEntityGraph(em, subject));
 
-            Preconditions.checkArgument(queriedQuotesUsingGraphHint.equals(insertedQuotes));
+            Preconditions.checkArgument(queriedQuotesUsingGraphHint.equals(filteredQuotes));
 
             queriedQuotes.forEach(qt -> {
                 System.out.println();
@@ -87,7 +82,7 @@ public class QueryQuotes {
             });
 
             System.out.println();
-            System.out.printf("Number of quotes: %d%n", queriedQuotes.size());
+            System.out.printf("Number of quotes for subject '%s': %d%n", subject, queriedQuotes.size());
         }
     }
 
@@ -95,21 +90,27 @@ public class QueryQuotes {
         return QuotesEntityManagerFactoryCreator.createEntityManagerFactory();
     }
 
-    private static ImmutableList<Model.Quote> findAllQuotes(EntityManager entityManager) {
+    private static ImmutableList<Model.Quote> findQuotesBySubject(EntityManager entityManager, String subject) {
         // Without the "join fetch", separate SQL queries would be generated per Quote.
         // Clearly that would be quite undesirable.
         // The "join fetch" does what it says, namely retrieving the quote's author and subjects as well.
+        // Yet note that for "join fetch" we cannot use any identification variable. Hence, the join duplication.
+        // It is probably better to distinguish between the query and the fetching side effect, by passing a "load graph hint".
+        // In that case we could simplify the JPQL query, by just using an identification variable for the subjects.
         String ql = """
                 select qt from Quote qt
                 join fetch qt.attributedTo
-                left join fetch qt.subjects""";
+                left join fetch qt.subjects
+                left join qt.subjects subj
+                where subj.subject = :subject""";
         return entityManager.createQuery(ql, Quote.class)
+                .setParameter("subject", subject)
                 .getResultStream()
                 .map(Quote::toModel)
                 .collect(ImmutableList.toImmutableList());
     }
 
-    private static ImmutableList<Model.Quote> findAllQuotesUsingCriteriaApi(EntityManager entityManager) {
+    private static ImmutableList<Model.Quote> findQuotesBySubjectUsingCriteriaApi(EntityManager entityManager, String subject) {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Quote> cq = cb.createQuery(Quote.class);
 
@@ -119,61 +120,42 @@ public class QueryQuotes {
         Root<Quote> quote = cq.from(Quote.class);
         quote.fetch(Quote_.attributedTo, JoinType.INNER);
         quote.fetch(Quote_.subjects, JoinType.LEFT);
+        Join<Quote, Subject> quoteSubject = quote.join(Quote_.subjects, JoinType.LEFT);
+
+        cq.where(cb.equal(quoteSubject.get(Subject_.SUBJECT), cb.parameter(String.class, Subject_.SUBJECT)));
         cq.select(quote);
 
+        // Below, we could have done without the parameter, by using "cb.literal" instead of "cb.parameter" above.
         return entityManager.createQuery(cq)
+                .setParameter("subject", subject)
                 .getResultStream()
                 .map(Quote::toModel)
                 .collect(ImmutableList.toImmutableList());
     }
 
-    private static ImmutableList<Model.Quote> findQuotesOneByOne(EntityManager entityManager) {
-        // Native SQL query for quote IDs
-        ConnectionFunction<Connection, List<Long>> quoteIdQuery = con -> {
-            String sql = String.format("select %s from %s", Quote_.ID, "Quote");
-
-            List<Long> ids = new ArrayList<>();
-            try (PreparedStatement ps = con.prepareStatement(sql);
-                 ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    ids.add(rs.getLong(1));
-                }
-            }
-            return List.copyOf(ids);
-        };
-        List<Long> quoteIds = entityManager.callWithConnection(quoteIdQuery);
-
-        // Finding the quotes, one by one, using method EntityManager.find
-        // Clearly, this is quite inefficient, and should not be done in practice
-        return quoteIds.stream()
-                .map(id -> {
-                    // Trying to avoid triggering lazy fetching, by fetching needed data upfront
-                    EntityGraph<Quote> quoteGraph = entityManager.createEntityGraph(Quote.class);
-                    quoteGraph.addSubgraph(Quote_.attributedTo);
-                    quoteGraph.addElementSubgraph(Quote_.subjects);
-                    return entityManager.find(quoteGraph, id);
-                })
-                .map(Quote::toModel)
-                .collect(ImmutableList.toImmutableList());
-    }
-
-    private static ImmutableList<Model.Quote> findAllQuotesUsingEntityGraph(EntityManager entityManager) {
+    private static ImmutableList<Model.Quote> findQuotesBySubjectUsingEntityGraph(EntityManager entityManager, String subject) {
         // See https://www.baeldung.com/jpa-entity-graph
 
-        String ql = "select qt from Quote qt";
+        // This JPQL query is quite simple, due to the use of identification variable "subj".
+        // Clearly, "qt.subjects" is a collection of subject entities reachable from Quote "qt".
+        // Yet, the identification variable "subj" refers to ANY subject in that collection.
+        // Note that making the distinction between the query without side effects and the "graph fetching hint" makes the query simpler.
+        String ql = """
+                select qt from Quote qt
+                left join qt.subjects subj
+                where subj.subject = :subject""";
 
         EntityGraph<Quote> quoteGraph = entityManager.createEntityGraph(Quote.class);
         quoteGraph.addSubgraph(Quote_.attributedTo);
         quoteGraph.addElementSubgraph(Quote_.subjects);
 
         return entityManager.createQuery(ql, Quote.class)
+                .setParameter("subject", subject)
                 .setHint(LOAD_GRAPH, quoteGraph)
                 .getResultStream()
                 .map(Quote::toModel)
                 .collect(ImmutableList.toImmutableList());
     }
-
-    // TODO Lower-level "join" query resembling SQL more in join conditions
 
     private static List<Quote> insertQuotes(EntityManager entityManager) {
         QuotesInserter quotesInserter = new QuotesInserter(entityManager);
