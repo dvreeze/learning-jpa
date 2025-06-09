@@ -113,6 +113,8 @@ public class QueryQuotes {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Quote> cq = cb.createQuery(Quote.class);
 
+        // Note that the Criteria API is not a "functional API" but depends on in-place mutations of objects such as CriteriaQuery.
+
         // Without the "join fetch", separate SQL queries would be generated per Quote, once the associated data is lazily loaded.
         // Clearly that would be quite undesirable.
         // The "join fetch" does what it says, namely retrieving the quote's author and subjects as well.
@@ -173,8 +175,6 @@ public class QueryQuotes {
                 .map(Quote::toModel)
                 .collect(ImmutableList.toImmutableList());
     }
-
-    // TODO Lower-level "join" query resembling SQL more in join conditions
 
     private static List<Quote> insertQuotes(EntityManager entityManager) {
         QuotesInserter quotesInserter = new QuotesInserter(entityManager);

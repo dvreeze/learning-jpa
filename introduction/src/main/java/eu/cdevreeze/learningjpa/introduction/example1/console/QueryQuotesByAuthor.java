@@ -78,6 +78,12 @@ public class QueryQuotesByAuthor {
 
             Preconditions.checkArgument(queriedQuotesUsingGraphHint.equals(filteredQuotes));
 
+            // Low level SQL-like JPQL query, using "load graph hint"
+            ImmutableList<Model.Quote> queriedQuotesAtLowLevelUsingGraphHint =
+                    emf.callInTransaction(em -> findQuotesByAuthorVerboselyUsingEntityGraph(em, authorName));
+
+            Preconditions.checkArgument(queriedQuotesAtLowLevelUsingGraphHint.equals(filteredQuotes));
+
             queriedQuotes.forEach(qt -> {
                 System.out.println();
                 System.out.println(qt);
@@ -112,6 +118,8 @@ public class QueryQuotesByAuthor {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Quote> cq = cb.createQuery(Quote.class);
 
+        // Note that the Criteria API is not a "functional API" but depends on in-place mutations of objects such as CriteriaQuery.
+
         // Without the "join fetch", separate SQL queries would be generated per Quote, once the associated data is lazily loaded.
         // Clearly that would be quite undesirable.
         // The "join fetch" does what it says, namely retrieving the quote's author and subjects as well.
@@ -134,6 +142,28 @@ public class QueryQuotesByAuthor {
         // See https://www.baeldung.com/jpa-entity-graph
 
         String ql = "select qt from Quote qt where qt.attributedTo.name = :authorName";
+
+        EntityGraph<Quote> quoteGraph = entityManager.createEntityGraph(Quote.class);
+        quoteGraph.addSubgraph(Quote_.attributedTo);
+        quoteGraph.addElementSubgraph(Quote_.subjects);
+
+        return entityManager.createQuery(ql, Quote.class)
+                .setParameter("authorName", authorName)
+                .setHint(LOAD_GRAPH, quoteGraph)
+                .getResultStream()
+                .map(Quote::toModel)
+                .collect(ImmutableList.toImmutableList());
+    }
+
+    private static ImmutableList<Model.Quote> findQuotesByAuthorVerboselyUsingEntityGraph(EntityManager entityManager, String authorName) {
+        // See https://www.baeldung.com/jpa-entity-graph
+
+        // This is a verbose low level JPQL query that is much closer to the generated native SQL
+
+        String ql = """
+                select qt from Quote qt
+                join Author auth on (qt.attributedTo.id = auth.id)
+                where auth.name = :authorName""";
 
         EntityGraph<Quote> quoteGraph = entityManager.createEntityGraph(Quote.class);
         quoteGraph.addSubgraph(Quote_.attributedTo);

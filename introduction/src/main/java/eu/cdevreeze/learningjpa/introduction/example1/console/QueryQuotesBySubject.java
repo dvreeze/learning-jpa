@@ -76,6 +76,12 @@ public class QueryQuotesBySubject {
 
             Preconditions.checkArgument(queriedQuotesUsingGraphHint.equals(filteredQuotes));
 
+            // Similar simple query, using "load graph hint"
+            ImmutableList<Model.Quote> queriedQuotesUsingInAndGraphHint =
+                    emf.callInTransaction(em -> findQuotesBySubjectUsingInAndUsingEntityGraph(em, subject));
+
+            Preconditions.checkArgument(queriedQuotesUsingInAndGraphHint.equals(filteredQuotes));
+
             queriedQuotes.forEach(qt -> {
                 System.out.println();
                 System.out.println(qt);
@@ -112,6 +118,8 @@ public class QueryQuotesBySubject {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Quote> cq = cb.createQuery(Quote.class);
 
+        // Note that the Criteria API is not a "functional API" but depends on in-place mutations of objects such as CriteriaQuery.
+
         // Without the "join fetch", separate SQL queries would be generated per Quote, once the associated data is lazily loaded.
         // Clearly that would be quite undesirable.
         // The "join fetch" does what it says, namely retrieving the quote's author and subjects as well.
@@ -141,6 +149,28 @@ public class QueryQuotesBySubject {
         String ql = """
                 select qt from Quote qt
                 left join qt.subjects subj
+                where subj.subject = :subject""";
+
+        EntityGraph<Quote> quoteGraph = entityManager.createEntityGraph(Quote.class);
+        quoteGraph.addSubgraph(Quote_.attributedTo);
+        quoteGraph.addElementSubgraph(Quote_.subjects);
+
+        return entityManager.createQuery(ql, Quote.class)
+                .setParameter("subject", subject)
+                .setHint(LOAD_GRAPH, quoteGraph)
+                .getResultStream()
+                .map(Quote::toModel)
+                .collect(ImmutableList.toImmutableList());
+    }
+
+    private static ImmutableList<Model.Quote> findQuotesBySubjectUsingInAndUsingEntityGraph(EntityManager entityManager, String subject) {
+        // See https://www.baeldung.com/jpa-entity-graph
+
+        // Almost equivalent to the JPQL query above that uses a "left join".
+        // It would be equivalent if we replaced the "left outer join" above by an "inner join".
+
+        String ql = """
+                select qt from Quote qt, in(qt.subjects) subj
                 where subj.subject = :subject""";
 
         EntityGraph<Quote> quoteGraph = entityManager.createEntityGraph(Quote.class);
