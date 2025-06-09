@@ -71,7 +71,7 @@ public class QueryQuotes {
             // The same query, as a combination of a native query for IDs, and EntityManager.find calls
             // Of course this is very inefficient, and should not be done in practice
             ImmutableList<Model.Quote> queriedQuotesWithoutUsingJpql =
-                    emf.callInTransaction(QueryQuotes::findQuotesOneByOne);
+                    emf.callInTransaction(QueryQuotes::findAllQuotesOneByOne);
 
             Preconditions.checkArgument(queriedQuotesWithoutUsingJpql.equals(insertedQuotes));
 
@@ -96,7 +96,7 @@ public class QueryQuotes {
     }
 
     private static ImmutableList<Model.Quote> findAllQuotes(EntityManager entityManager) {
-        // Without the "join fetch", separate SQL queries would be generated per Quote.
+        // Without the "join fetch", separate SQL queries would be generated per Quote, once the associated data is lazily loaded.
         // Clearly that would be quite undesirable.
         // The "join fetch" does what it says, namely retrieving the quote's author and subjects as well.
         String ql = """
@@ -113,12 +113,13 @@ public class QueryQuotes {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Quote> cq = cb.createQuery(Quote.class);
 
-        // Without the "join fetch", separate SQL queries would be generated per Quote.
+        // Without the "join fetch", separate SQL queries would be generated per Quote, once the associated data is lazily loaded.
         // Clearly that would be quite undesirable.
         // The "join fetch" does what it says, namely retrieving the quote's author and subjects as well.
         Root<Quote> quote = cq.from(Quote.class);
         quote.fetch(Quote_.attributedTo, JoinType.INNER);
         quote.fetch(Quote_.subjects, JoinType.LEFT);
+
         cq.select(quote);
 
         return entityManager.createQuery(cq)
@@ -127,7 +128,7 @@ public class QueryQuotes {
                 .collect(ImmutableList.toImmutableList());
     }
 
-    private static ImmutableList<Model.Quote> findQuotesOneByOne(EntityManager entityManager) {
+    private static ImmutableList<Model.Quote> findAllQuotesOneByOne(EntityManager entityManager) {
         // Native SQL query for quote IDs
         ConnectionFunction<Connection, List<Long>> quoteIdQuery = con -> {
             String sql = String.format("select %s from %s", Quote_.ID, "Quote");

@@ -93,7 +93,7 @@ public class QueryQuotesByAuthor {
     }
 
     private static ImmutableList<Model.Quote> findQuotesByAuthor(EntityManager entityManager, String authorName) {
-        // Without the "join fetch", separate SQL queries would be generated per Quote.
+        // Without the "join fetch", separate SQL queries would be generated per Quote, once the associated data is lazily loaded.
         // Clearly that would be quite undesirable.
         // The "join fetch" does what it says, namely retrieving the quote's author and subjects as well.
         String ql = """
@@ -112,14 +112,15 @@ public class QueryQuotesByAuthor {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Quote> cq = cb.createQuery(Quote.class);
 
-        // Without the "join fetch", separate SQL queries would be generated per Quote.
+        // Without the "join fetch", separate SQL queries would be generated per Quote, once the associated data is lazily loaded.
         // Clearly that would be quite undesirable.
         // The "join fetch" does what it says, namely retrieving the quote's author and subjects as well.
         Root<Quote> quote = cq.from(Quote.class);
         quote.fetch(Quote_.attributedTo, JoinType.INNER);
         quote.fetch(Quote_.subjects, JoinType.LEFT);
-        cq.select(quote)
-                .where(cb.equal(quote.get(Quote_.attributedTo).get(Author_.name), cb.parameter(String.class, "authName")));
+
+        cq.where(cb.equal(quote.get(Quote_.attributedTo).get(Author_.name), cb.parameter(String.class, "authName")));
+        cq.select(quote);
 
         // Below, we could have done without the parameter, by using "cb.literal" instead of "cb.parameter" above.
         return entityManager.createQuery(cq)

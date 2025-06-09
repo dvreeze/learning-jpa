@@ -91,17 +91,15 @@ public class QueryQuotesBySubject {
     }
 
     private static ImmutableList<Model.Quote> findQuotesBySubject(EntityManager entityManager, String subject) {
-        // Without the "join fetch", separate SQL queries would be generated per Quote.
+        // Without the "join fetch", separate SQL queries would be generated per Quote, once the associated data is lazily loaded.
         // Clearly that would be quite undesirable.
         // The "join fetch" does what it says, namely retrieving the quote's author and subjects as well.
         // Yet note that for "join fetch" we cannot use any identification variable. Hence, the join duplication.
-        // It is probably better to distinguish between the query and the fetching side effect, by passing a "load graph hint".
-        // In that case we could simplify the JPQL query, by just using an identification variable for the subjects.
         String ql = """
                 select qt from Quote qt
-                join fetch qt.attributedTo
-                left join fetch qt.subjects
                 left join qt.subjects subj
+                left join fetch qt.subjects
+                join fetch qt.attributedTo
                 where subj.subject = :subject""";
         return entityManager.createQuery(ql, Quote.class)
                 .setParameter("subject", subject)
@@ -114,13 +112,13 @@ public class QueryQuotesBySubject {
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
         CriteriaQuery<Quote> cq = cb.createQuery(Quote.class);
 
-        // Without the "join fetch", separate SQL queries would be generated per Quote.
+        // Without the "join fetch", separate SQL queries would be generated per Quote, once the associated data is lazily loaded.
         // Clearly that would be quite undesirable.
         // The "join fetch" does what it says, namely retrieving the quote's author and subjects as well.
         Root<Quote> quote = cq.from(Quote.class);
+        Join<Quote, Subject> quoteSubject = quote.join(Quote_.subjects, JoinType.LEFT);
         quote.fetch(Quote_.attributedTo, JoinType.INNER);
         quote.fetch(Quote_.subjects, JoinType.LEFT);
-        Join<Quote, Subject> quoteSubject = quote.join(Quote_.subjects, JoinType.LEFT);
 
         cq.where(cb.equal(quoteSubject.get(Subject_.SUBJECT), cb.parameter(String.class, Subject_.SUBJECT)));
         cq.select(quote);
