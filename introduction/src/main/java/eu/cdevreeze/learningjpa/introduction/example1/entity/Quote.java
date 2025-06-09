@@ -50,8 +50,8 @@ public class Quote {
     @ManyToMany
     @JoinTable(
             name = "QuoteSubject",
-            joinColumns = @JoinColumn(name = "quoteId", referencedColumnName = "id", foreignKey = @ForeignKey(name = "FkQuoteId")),
-            inverseJoinColumns = @JoinColumn(name = "subjectId", referencedColumnName = "id", foreignKey = @ForeignKey(name = "FkSubjectId"))
+            joinColumns = @JoinColumn(name = "quoteId", nullable = false, referencedColumnName = "id", foreignKey = @ForeignKey(name = "FkQuoteId")),
+            inverseJoinColumns = @JoinColumn(name = "subjectId", nullable = false, referencedColumnName = "id", foreignKey = @ForeignKey(name = "FkSubjectId"))
     )
     // List instead of Set, to avoid having to override equals/hashCode for highly mutable JPA entities
     private List<Subject> subjects;
