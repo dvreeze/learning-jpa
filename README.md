@@ -33,6 +33,9 @@ The [Short Guide to Hibernate 7](https://docs.jboss.org/hibernate/orm/7.0/introd
 can be used as a starting point to use Hibernate ORM. Note that this guide does not limit itself to
 the Jakarta Persistence API.
 
+Some useful advice about what to do when things go wrong can also be found in that guide.
+See [Hibernate advice](https://docs.jboss.org/hibernate/orm/7.0/introduction/html_single/Hibernate_Introduction.html#advice).
+
 ## Creating the project
 
 The initial POM files were generated as described [here](https://www.baeldung.com/maven-multi-module).
