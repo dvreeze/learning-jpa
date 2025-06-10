@@ -81,6 +81,12 @@ public class QueryQuotes {
 
             Preconditions.checkArgument(queriedQuotesUsingGraphHint.equals(insertedQuotes));
 
+            // Simple Criteria query, using "load graph hint"
+            ImmutableList<Model.Quote> queriedQuotesUsingCriteriaApiAndGraphHint =
+                    emf.callInTransaction(QueryQuotes::findAllQuotesUsingCriteriaApiAndEntityGraph);
+
+            Preconditions.checkArgument(queriedQuotesUsingCriteriaApiAndGraphHint.equals(insertedQuotes));
+
             queriedQuotes.forEach(qt -> {
                 System.out.println();
                 System.out.println(qt);
@@ -170,6 +176,25 @@ public class QueryQuotes {
         quoteGraph.addElementSubgraph(Quote_.subjects);
 
         return entityManager.createQuery(ql, Quote.class)
+                .setHint(LOAD_GRAPH, quoteGraph)
+                .getResultStream()
+                .map(Quote::toModel)
+                .collect(ImmutableList.toImmutableList());
+    }
+
+    private static ImmutableList<Model.Quote> findAllQuotesUsingCriteriaApiAndEntityGraph(EntityManager entityManager) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Quote> cq = cb.createQuery(Quote.class);
+
+        Root<Quote> quote = cq.from(Quote.class);
+
+        cq.select(quote);
+
+        EntityGraph<Quote> quoteGraph = entityManager.createEntityGraph(Quote.class);
+        quoteGraph.addSubgraph(Quote_.attributedTo);
+        quoteGraph.addElementSubgraph(Quote_.subjects);
+
+        return entityManager.createQuery(cq)
                 .setHint(LOAD_GRAPH, quoteGraph)
                 .getResultStream()
                 .map(Quote::toModel)

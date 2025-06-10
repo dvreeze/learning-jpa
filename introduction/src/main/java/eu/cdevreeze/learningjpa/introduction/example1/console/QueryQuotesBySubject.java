@@ -76,6 +76,12 @@ public class QueryQuotesBySubject {
 
             Preconditions.checkArgument(queriedQuotesUsingGraphHint.equals(filteredQuotes));
 
+            // Simple Criteria query, using "load graph hint"
+            ImmutableList<Model.Quote> queriedQuotesUsingCriteriaApiAndGraphHint =
+                    emf.callInTransaction(em -> findQuotesBySubjectUsingCriteriaApiAndEntityGraph(em, subject));
+
+            Preconditions.checkArgument(queriedQuotesUsingCriteriaApiAndGraphHint.equals(filteredQuotes));
+
             // Similar simple query, using "load graph hint"
             ImmutableList<Model.Quote> queriedQuotesUsingInAndGraphHint =
                     emf.callInTransaction(em -> findQuotesBySubjectUsingInAndUsingEntityGraph(em, subject));
@@ -156,6 +162,28 @@ public class QueryQuotesBySubject {
         quoteGraph.addElementSubgraph(Quote_.subjects);
 
         return entityManager.createQuery(ql, Quote.class)
+                .setParameter("subject", subject)
+                .setHint(LOAD_GRAPH, quoteGraph)
+                .getResultStream()
+                .map(Quote::toModel)
+                .collect(ImmutableList.toImmutableList());
+    }
+
+    private static ImmutableList<Model.Quote> findQuotesBySubjectUsingCriteriaApiAndEntityGraph(EntityManager entityManager, String subject) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Quote> cq = cb.createQuery(Quote.class);
+
+        Root<Quote> quote = cq.from(Quote.class);
+        Join<Quote, Subject> quoteSubject = quote.join(Quote_.subjects, JoinType.LEFT);
+
+        cq.where(cb.equal(quoteSubject.get(Subject_.SUBJECT), cb.parameter(String.class, Subject_.SUBJECT)));
+        cq.select(quote);
+
+        EntityGraph<Quote> quoteGraph = entityManager.createEntityGraph(Quote.class);
+        quoteGraph.addSubgraph(Quote_.attributedTo);
+        quoteGraph.addElementSubgraph(Quote_.subjects);
+
+        return entityManager.createQuery(cq)
                 .setParameter("subject", subject)
                 .setHint(LOAD_GRAPH, quoteGraph)
                 .getResultStream()

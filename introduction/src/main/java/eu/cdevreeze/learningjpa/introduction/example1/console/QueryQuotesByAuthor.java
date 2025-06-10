@@ -78,6 +78,12 @@ public class QueryQuotesByAuthor {
 
             Preconditions.checkArgument(queriedQuotesUsingGraphHint.equals(filteredQuotes));
 
+            // Simple Criteria query, using "load graph hint"
+            ImmutableList<Model.Quote> queriedQuotesUsingCriteriaApiAndGraphHint =
+                    emf.callInTransaction(em -> findQuotesByAuthorUsingCriteriaApiAndEntityGraph(em, authorName));
+
+            Preconditions.checkArgument(queriedQuotesUsingCriteriaApiAndGraphHint.equals(filteredQuotes));
+
             // Low level SQL-like JPQL query, using "load graph hint"
             ImmutableList<Model.Quote> queriedQuotesAtLowLevelUsingGraphHint =
                     emf.callInTransaction(em -> findQuotesByAuthorVerboselyUsingEntityGraph(em, authorName));
@@ -149,6 +155,27 @@ public class QueryQuotesByAuthor {
 
         return entityManager.createQuery(ql, Quote.class)
                 .setParameter("authorName", authorName)
+                .setHint(LOAD_GRAPH, quoteGraph)
+                .getResultStream()
+                .map(Quote::toModel)
+                .collect(ImmutableList.toImmutableList());
+    }
+
+    private static ImmutableList<Model.Quote> findQuotesByAuthorUsingCriteriaApiAndEntityGraph(EntityManager entityManager, String authorName) {
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<Quote> cq = cb.createQuery(Quote.class);
+
+        Root<Quote> quote = cq.from(Quote.class);
+
+        cq.where(cb.equal(quote.get(Quote_.attributedTo).get(Author_.name), cb.parameter(String.class, "authName")));
+        cq.select(quote);
+
+        EntityGraph<Quote> quoteGraph = entityManager.createEntityGraph(Quote.class);
+        quoteGraph.addSubgraph(Quote_.attributedTo);
+        quoteGraph.addElementSubgraph(Quote_.subjects);
+
+        return entityManager.createQuery(cq)
+                .setParameter("authName", authorName)
                 .setHint(LOAD_GRAPH, quoteGraph)
                 .getResultStream()
                 .map(Quote::toModel)
