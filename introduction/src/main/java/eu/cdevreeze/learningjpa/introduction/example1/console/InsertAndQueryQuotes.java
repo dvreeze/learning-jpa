@@ -53,7 +53,7 @@ public class InsertAndQueryQuotes {
                     emf.callInTransaction(em ->
                             insertQuotes(em).stream().map(Quote::toModel).collect(ImmutableList.toImmutableList()));
 
-            // JPQL query for quotes (using a Criteria query), without first adding a new Quote
+            // JPA query for quotes (using a Criteria query), without first adding a new Quote
             ImmutableList<Model.Quote> queriedQuotes =
                     emf.callInTransaction(InsertAndQueryQuotes::findAllQuotes);
 
