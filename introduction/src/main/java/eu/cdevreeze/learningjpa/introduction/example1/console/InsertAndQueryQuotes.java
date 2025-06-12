@@ -109,8 +109,8 @@ public class InsertAndQueryQuotes {
     private static Author upsertAuthor(String name, EntityManager entityManager) {
         // Upserting the hard way. We configured no cascading behaviour.
         Optional<Author> authorOption =
-                entityManager.createQuery("select auth from Author auth where auth.name = ?1", Author.class)
-                        .setParameter(1, name)
+                entityManager.createNamedQuery("findByName", Author.class)
+                        .setParameter("name", name)
                         .getResultStream()
                         .findFirst();
         return authorOption.orElseGet(() -> {
@@ -123,8 +123,8 @@ public class InsertAndQueryQuotes {
     private static Subject upsertSubject(String subject, EntityManager entityManager) {
         // Upserting the hard way. We configured no cascading behaviour.
         Optional<Subject> subjectOption =
-                entityManager.createQuery("select subj from Subject subj where subj.subject = ?1", Subject.class)
-                        .setParameter(1, subject)
+                entityManager.createNamedQuery("findBySubject", Subject.class)
+                        .setParameter("subject", subject)
                         .getResultStream()
                         .findFirst();
         return subjectOption.orElseGet(() -> {

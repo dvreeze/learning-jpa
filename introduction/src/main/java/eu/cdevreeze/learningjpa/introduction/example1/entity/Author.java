@@ -28,6 +28,12 @@ import java.util.Optional;
  */
 @Entity
 @Table(name = "Author") // This annotation could be left out (i.e. left implicit)
+@NamedQueries(
+        @NamedQuery(
+                name = "findByName",
+                query = "select auth from Author auth where auth.name = :name"
+        )
+)
 public class Author {
 
     @Id

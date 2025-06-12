@@ -28,6 +28,12 @@ import java.util.Optional;
  */
 @Entity
 @Table(name = "Subject") // This annotation could be left out (i.e. left implicit)
+@NamedQueries(
+        @NamedQuery(
+                name = "findBySubject",
+                query = "select subj from Subject subj where subj.subject = :subject"
+        )
+)
 public class Subject {
 
     @Id
